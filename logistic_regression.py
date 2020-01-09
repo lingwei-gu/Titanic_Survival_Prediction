@@ -54,10 +54,12 @@ for data in data_sets:
     for sex in range(2):
         for p_class in range(1, 4):
             temp_age = data[(data['Sex'] == sex) & (data['Pclass'] == p_class)]['Age'].dropna()
+
             possible_ages[sex, p_class - 1] = temp_age.median()
+
     for sex in range(2):
         for p_class in range(1, 4):
-            data.loc[(data.Sex == sex) & (data.Pclass == p_class) & (data.Age.isnull())] =\
+            data.loc[(data.Sex == sex) & (data.Pclass == p_class) & (data.Age.isnull()), 'Age'] = \
                 possible_ages[sex, p_class - 1]
 
 """
@@ -70,10 +72,29 @@ for dataset in combine:
 train_df.head()
 """
 
+data_sets[0]['AgeBand'] = pd.cut(train_data['Age'], 5)
 
+# print(train_data[['AgeBand', 'Survived']].groupby(['AgeBand'], as_index=False).mean().\
+#       sort_values(by='AgeBand', ascending=True))
 
+for data in data_sets:
+    data.loc[data['Age'] <= 16.336, 'Age'] = 0
+    data.loc[(data['Age'] > 16.336) & (data['Age'] <= 32.252), 'Age'] = 1
+    data.loc[(data['Age'] > 32.252) & (data['Age'] <= 48.168), 'Age'] = 2
+    data.loc[(data['Age'] > 48.168) & (data['Age'] <= 64.084), 'Age'] = 3
+    data.loc[data['Age'] > 64.084, 'Age'] = 4
 
+data_sets[0] = train_data.drop(['AgeBand'], axis=1)
 
+# See if the # of family members can affect the survival rate
+for data in data_sets:
+    data['FamilyMember'] = data['SibSp'] + data['Parch'] + 1
+    data['Alone'] = 0
+    data.loc[data['FamilyMember'] == 1, 'Alone'] = 1
+    data = data.drop(['SibSp', 'Parch', 'FamilyMember'], axis=1)
+
+# print(train_data[['FamilyMember', 'Survived']].groupby(['FamilyMember'], as_index=False).mean().
+#       sort_values(by='FamilyMember', ascending=True))
 
 
 
